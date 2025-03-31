@@ -2,20 +2,20 @@ const express=require("express");
 
 const app=express();
 
-app.post("/users/signup",function(req,res){
+app.post("/user/signup",function(req,res){
     res.json({
         message:"Signup Endpoint"
     })
 })
 
-app.post("/users/signin",function(req,res){
+app.post("/user/signin",function(req,res){
     res.json({
         message:"Signin Endpoint"
     })
 })
 
 
-app.post("/users/purchase",function(req,res){
+app.post("/user/purchase",function(req,res){
     res.json({
         message:"Purchase  endpoint"
     })

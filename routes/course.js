@@ -1,20 +1,20 @@
 const {Router}=require("express");
 
-const courseRoute=Router();
+const courseRouter=Router();
 
 
-courseRoute.get("/purchase",function(req,res){
+courseRouter.post("/purchase",function(req,res){
     res.json({
         message:"Purchase list endpoint"
     })
 })
 
-courseRoute.get("/preview",function(req,res){
+courseRouter.get("/preview",function(req,res){
     res.json({
-        message:"Courses endpoint"
+        message:"Courses preview endpoint"
     })
 })
 
 module.exports={
-    courseRoute:courseRoute
+    courseRouter:courseRouter
 }

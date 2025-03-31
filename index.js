@@ -15,13 +15,13 @@ app.post("/user/signin",function(req,res){
 })
 
 
-app.post("/user/purchase",function(req,res){
+app.post("/user/purchases",function(req,res){
     res.json({
         message:"Purchase  endpoint"
     })
 })
 
-app.get("/users/purchases",function(req,res){
+app.get("/course/purchase",function(req,res){
     res.json({
         message:"Purchase list endpoint"
     })

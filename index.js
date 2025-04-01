@@ -10,6 +10,7 @@ const { adminRouter } = require("./routes/admin");
 const mongoURL = process.env.MONGO_URL;
 
 const app=express();
+app.use(express.json());
 
 
 app.use("/api/v1/user",userRouter);

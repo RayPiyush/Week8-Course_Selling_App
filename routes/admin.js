@@ -1,9 +1,11 @@
 const {Router} = require("express");
-const {adminModel}=require("../db");
+const {adminModel, courseModel}=require("../db");
 const jwt=require("jsonwebtoken");
 const adminRouter=Router();
+const {JWT_ADMIN_PASSWORD} =require("../config");
+const {adminMiddleware} = require("../middleware/adminMiddleware");
 
-const JWT_ADMIN_PASSWORD="1222csasdsa";
+
 
 adminRouter.post("/signup",async function(req,res){
 
@@ -54,9 +56,23 @@ adminRouter.post("/signin",async function(req,res){
     })
 })
 
-adminRouter.post("/course",function(req,res){
+adminRouter.post("/course",adminMiddleware,async function(req,res){
+    const adminId=req.userId;
+    
+    const {title,description,imageUrl,price}=req.body;
+
+        //TODO-Make option to upload img rather than URL
+    await courseModel.create({
+        title:title,
+        description:description,
+        imageUrl:imageUrl,
+        price:price,
+        creatorId:adminId
+    })
+    
     res.json({
-        message:"Admin Course Endpoint"
+        message:"Course Created",
+        courseId:course._id
     })
 })
 

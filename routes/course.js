@@ -1,17 +1,32 @@
 const {Router}=require("express");
+const {userMiddleware} = require("../middleware/userMiddleware");
+const { purchaseModel, courseModel } = require("../db");
 
 const courseRouter=Router();
 
 
-courseRouter.post("/purchase",function(req,res){
+courseRouter.post("/purchase",userMiddleware,async function(req,res){
+    
+    const userId=req.userId;
+    const courseId=req.body.courseId;
+
+    //here u should check that the user has actually paid the price or not
+    await purchaseModel.create({
+        userId,
+        courseId
+    })
+    
     res.json({
-        message:"Purchase list endpoint"
+        message:"You have successfully bought the course"
     })
 })
 
-courseRouter.get("/preview",function(req,res){
+courseRouter.get("/preview",async function(req,res){
+
+    const courses=await courseModel.find({});
+
     res.json({
-        message:"Courses preview endpoint"
+        courses
     })
 })
 

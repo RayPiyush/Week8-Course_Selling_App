@@ -1,7 +1,8 @@
 const {Router} = require("express");
-const {userModel}=require("../db");
+const {userModel, purchaseModel, courseModel}=require("../db");
 const jwt=require("jsonwebtoken");
 const {JWT_USER_PASSWORD}=require("../config");
+const {userMiddleware} = require("../middleware/userMiddleware");
 const userRouter=Router();
 
 userRouter.post("/signup",async function(req,res){
@@ -51,9 +52,28 @@ userRouter.post("/signin",async function(req,res){
 })
 
 
-userRouter.post("/purchases",function(req,res){
+userRouter.get("/purchases",userMiddleware,async function(req,res){
+    const userId=req.userId;
+
+    const purchases=await purchaseModel.find({
+        userId,
+    })
+
+
+    // let purchaseCourseIds=[];
+
+    // for(let i=0;i<purchases.length;i++){
+    //     purchaseCourseIds.push(purchases[i].courseId);
+    // }
+
+    //map is doing the above 4 line codes in 1 line
+    const courseData=await courseModel.find({
+        _id:{$in:purchases.map(x=>x.courseId)}
+    })
+
     res.json({
-        message:"Purchase  endpoint"
+        purchases,
+        courseData
     })
 })
 

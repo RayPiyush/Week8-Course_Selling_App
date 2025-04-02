@@ -51,9 +51,6 @@ adminRouter.post("/signin",async function(req,res){
             })
         }
 
-    res.json({
-        message:"Admin Signin Endpoint"
-    })
 })
 
 adminRouter.post("/course",adminMiddleware,async function(req,res){
@@ -62,7 +59,7 @@ adminRouter.post("/course",adminMiddleware,async function(req,res){
     const {title,description,imageUrl,price}=req.body;
 
         //TODO-Make option to upload img rather than URL
-    await courseModel.create({
+        const course=await courseModel.create({
         title:title,
         description:description,
         imageUrl:imageUrl,
@@ -76,15 +73,38 @@ adminRouter.post("/course",adminMiddleware,async function(req,res){
     })
 })
 
-adminRouter.put("/course",function(req,res){
+adminRouter.put("/course",adminMiddleware,async function(req,res){
+    const adminId=req.userId;
+    
+    const {title,description,imageUrl,price,courseId}=req.body;
+
+        //TODO-Make option to upload img rather than URL
+    const course=await courseModel.updateOne({
+        _id:courseId,
+        creatorId:adminId
+    },{
+        title:title,
+        description:description,
+        imageUrl:imageUrl,
+        price:price
+    })
+    
     res.json({
-        message:"Admin add Course Endpoint"
+        message:"Course Updated",
+        courseId:course._id
     })
 })
 
-adminRouter.get("/course/bulk",function(req,res){
+adminRouter.get("/course/bulk",adminMiddleware,async function(req,res){
+    const adminId=req.userId;
+    
+    const courses=await courseModel.find({
+        creatorId:adminId
+    });
+    
     res.json({
-        message:"Admin Bulk Course Endpoint"
+        message:"Your Course",
+        courses
     })
 })
 

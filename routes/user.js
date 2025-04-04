@@ -1,36 +1,23 @@
 const {Router} = require("express");
 const {userModel, purchaseModel, courseModel}=require("../db");
 const jwt=require("jsonwebtoken");
-const zod=require("zod");
 const bcrypt=require("bcrypt");
 const {JWT_USER_PASSWORD}=require("../config");
 const {userMiddleware} = require("../middleware/userMiddleware");
 const userRouter=Router();
-const {signupUserSchema}=require("../zod/inputValidation");
+const {signupUserSchema,signinUserSchema}=require("../zod/inputValidation");
 
-// const signupSchema = zod.object({
-//     email: zod.string().email(),
-//     password: zod.string().min(6, "Password must be at least 6 characters"),
-//     firstName: zod.string().min(1),
-//     lastName: zod.string().min(1),
-// }).refine(async (data) => {
-//     const existingUser = await userModel.findOne({ email: data.email });
-//     return !existingUser;
-//   }, {
-//     message: "Email already in use",
-//     path: ["email"],
-//   });
 
 userRouter.post("/signup",async function(req,res){
     //add zod validation here
     //use bCrypt to hash the password
     try{
 
-        const result = signupUserSchema.safeParse(req.body);
+        const result = await signupUserSchema.safeParseAsync(req.body);
         if (!result.success) {
             return res.status(400).json({
                 message: "Validation failed",
-                errors: result.error.errors
+                errors: result.error.issues
             });
         }
         const {email,password,firstName,lastName}=result.data;
@@ -65,10 +52,21 @@ userRouter.post("/signup",async function(req,res){
 
 userRouter.post("/signin",async function(req,res){
 
-    const {email,password}=req.body;
+    
 
     //TODO:Ideally pwd should be hashed and hence u cant compare the user provided password and tha database password
     try{
+
+        const parsed=signinUserSchema.safeParse(req.body);
+        if(!parsed.success){
+           return res.status(411).json({
+                message:"validation failed",
+                error:parsed.error.errors
+            })
+        }
+    const {email,password}=parsed.data;
+
+
         const user=await userModel.findOne({
             email
         })

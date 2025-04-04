@@ -1,39 +1,91 @@
 const {Router} = require("express");
 const {userModel, purchaseModel, courseModel}=require("../db");
 const jwt=require("jsonwebtoken");
+const zod=require("zod");
+const bcrypt=require("bcrypt");
 const {JWT_USER_PASSWORD}=require("../config");
 const {userMiddleware} = require("../middleware/userMiddleware");
 const userRouter=Router();
+const {signupUserSchema}=require("../zod/inputValidation");
+
+// const signupSchema = zod.object({
+//     email: zod.string().email(),
+//     password: zod.string().min(6, "Password must be at least 6 characters"),
+//     firstName: zod.string().min(1),
+//     lastName: zod.string().min(1),
+// }).refine(async (data) => {
+//     const existingUser = await userModel.findOne({ email: data.email });
+//     return !existingUser;
+//   }, {
+//     message: "Email already in use",
+//     path: ["email"],
+//   });
 
 userRouter.post("/signup",async function(req,res){
     //add zod validation here
     //use bCrypt to hash the password
-    const {email,password,firstName,lastName}=req.body;
+    try{
+
+        const result = signupUserSchema.safeParse(req.body);
+        if (!result.success) {
+            return res.status(400).json({
+                message: "Validation failed",
+                errors: result.error.errors
+            });
+        }
+        const {email,password,firstName,lastName}=result.data;
+
+        // ✅ Hash the password using bcrypt
+        const hashedPassword = await bcrypt.hash(password, 10);
 
     //put inside this in try-catch block
-    await userModel.create({
-        email:email,
-        password:password,
-        firstName:firstName,
-        lastName:lastName
-    })
-    res.json({
-        message:"Signup succeded"
-    })
-})
+        await userModel.create({
+            email:email,
+            password:hashedPassword,
+            firstName:firstName,
+            lastName:lastName
+        });
+        res.json({
+            message:"Signup succeded"
+        });
+    }
+    catch (error) {
+
+        if (error.code === 11000 && error.keyPattern && error.keyPattern.email) {
+            return res.status(409).json({ message: "Email already in use in db" });
+          }
+
+        console.error("Signup error:", error);
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+    
+});
 
 userRouter.post("/signin",async function(req,res){
 
     const {email,password}=req.body;
 
     //TODO:Ideally pwd should be hashed and hence u cant compare the user provided password and tha database password
+    try{
+        const user=await userModel.findOne({
+            email
+        })
+        if(!user){
+            return res.status(403).json({
+                message:"User Not Found"
+            })
+        }
 
-    const user=await userModel.findOne({
-        email:email,
-        password:password
-    });
+        const passwordMatch=await bcrypt.compare(password,user.password);
 
-    if(user){
+        if(!passwordMatch){
+            return res.status(403).json({
+                message:"Incorrect Credentials"
+            })
+        }
+
         const token=jwt.sign({
             id:user._id
         },JWT_USER_PASSWORD);
@@ -42,14 +94,14 @@ userRouter.post("/signin",async function(req,res){
         res.json({
             token:token
         })
+
     }
-    else{
-        res.status(403).json({
-            message:"Incorrect Credentials"
-        })
+    catch(error){
+        console.error("Signin error:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
-    
-})
+});
+
 
 
 userRouter.get("/purchases",userMiddleware,async function(req,res){

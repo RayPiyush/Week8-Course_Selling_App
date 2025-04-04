@@ -5,7 +5,7 @@ const bcrypt=require("bcrypt");
 const adminRouter=Router();
 const {JWT_ADMIN_PASSWORD} =require("../config");
 const {adminMiddleware} = require("../middleware/adminMiddleware");
-const {signupAdminSchema,signinAdminSchema}=require("../zod/inputValidation");
+const {signupAdminSchema,signinAdminSchema,courseAdminSchema}=require("../zod/inputValidation");
 
 
 adminRouter.post("/signup",async function(req,res){
@@ -100,22 +100,37 @@ adminRouter.post("/signin",async function(req,res){
 
 adminRouter.post("/course",adminMiddleware,async function(req,res){
     const adminId=req.userId;
-    
-    const {title,description,imageUrl,price}=req.body;
+
+    try {
+        const courseCheck=courseAdminSchema.safeParse(req.body);
+        if(!courseCheck.success){
+            return res.status(403).json(({
+                message:"Give input in correct format",
+                error:courseCheck.error.errors
+            }))
+        }
+        const { title, description, imageUrl, price } = courseCheck.data;
 
         //TODO-Make option to upload img rather than URL
-        const course=await courseModel.create({
-        title:title,
-        description:description,
-        imageUrl:imageUrl,
-        price:price,
-        creatorId:adminId
-    })
+        const course = await courseModel.create({
+            title: title,
+            description: description,
+            imageUrl: imageUrl,
+            price: price,
+            creatorId: adminId
+        })
+
+        res.json({
+            message: "Course Created",
+            courseId: course._id
+        })
+    }
+    catch(error){
+        console.error("Course Creation error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
     
-    res.json({
-        message:"Course Created",
-        courseId:course._id
-    })
+    
 })
 
 adminRouter.put("/course",adminMiddleware,async function(req,res){
